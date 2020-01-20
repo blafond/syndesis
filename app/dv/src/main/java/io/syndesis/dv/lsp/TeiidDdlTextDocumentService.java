@@ -15,7 +15,6 @@
  */
 package io.syndesis.dv.lsp;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +22,37 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.CodeLens;
+import org.eclipse.lsp4j.CodeLensParams;
+import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.DidCloseTextDocumentParams;
+import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.DocumentHighlight;
+import org.eclipse.lsp4j.DocumentOnTypeFormattingParams;
+import org.eclipse.lsp4j.DocumentRangeFormattingParams;
+import org.eclipse.lsp4j.DocumentSymbol;
+import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.Hover;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
+import org.eclipse.lsp4j.ReferenceParams;
+import org.eclipse.lsp4j.RenameParams;
+import org.eclipse.lsp4j.SignatureHelp;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.slf4j.Logger;
@@ -52,30 +81,20 @@ public class TeiidDdlTextDocumentService implements TextDocumentService {
 		LOGGER.info("completion: {}", uri);
         TextDocumentItem doc = openedDocuments.get(uri);
         
-    	CompletionList results = new CompletionList();
-    	results.setIsIncomplete(true);
-    	results.setItems(new ArrayList<>());
-        
         List<CompletionItem> items = completionProvider.getCompletionItems(doc.getText(), completionParams.getPosition());
         
-        if( items != null && items.isEmpty() ) {
+        if( items != null && !items.isEmpty() ) {
         	System.out.print("\n >> TeiidDdlTextDocumentService.completion() found = " + items.size() + " CompletionItems");
-        	results.getItems().addAll(items);
         } else {
             CompletionItem nothingItem = new CompletionItem("< NOTHING FOUND >");
             items.add(nothingItem);
         }
         
-        for(CompletionItem item: results.getItems()) {
+        for(CompletionItem item: items) {
         	System.out.println("  CompletionItem:  label = " + item.getLabel());
         }
-
-        
         //return CompletableFuture.completedFuture(Either.forRight(results));
-        if( items.size() > 0 ) {
-        	return CompletableFuture.completedFuture(Either.forLeft(Collections.singletonList(items.get(0))));
-        }
-        return CompletableFuture.completedFuture(null);
+        return CompletableFuture.completedFuture(Either.forLeft(items));
 
 //        return CompletableFuture.completedFuture(Either.<List<CompletionItem>, CompletionList>forRight(results));
 //		String uri = completionParams.getTextDocument().getUri();
